@@ -3,6 +3,7 @@ from dataclasses import dataclass
 import math
 from app.simulation.phases import (
     FlightPhase,
+    PHASE_BURN_RATES,
     PHASE_DURATIONS,
     PHASE_START_MINUTES,
     TOTAL_DURATION_MINUTES,
@@ -84,9 +85,16 @@ def _airspeed_knots(
     return 0
 
 
-def _great_circle_position(progress: float) -> tuple[float, float]:
-    """Interpolate lat/lon along great-circle path from LAX to JFK. progress 0-1."""
-    # Spherical linear interpolation (slerp) for simplicity
+def _linear_position(progress: float) -> tuple[float, float]:
+    """Interpolate lat/lon between LAX and JFK. progress 0-1.
+
+    Uses linear interpolation in lat/lon space—treats lat and lon like flat
+    coordinates. For a flight simulator where we only need
+    plausible intermediate positions between LAX and JFK, this linear
+    approximation is simple and usually sufficient. For more accurate
+    great-circle paths, you'd use formulas like the spherical linear
+    interpolation (slerp) for vectors on the unit sphere.
+    """
     t = max(0, min(1, progress))
     lat = LAX_LAT + (JFK_LAT - LAX_LAT) * t
     lon = LAX_LON + (JFK_LON - LAX_LON) * t
@@ -94,7 +102,26 @@ def _great_circle_position(progress: float) -> tuple[float, float]:
 
 
 def _heading_degrees(lat: float, lon: float) -> float:
-    """Approximate heading (degrees) from LAX toward JFK at current position."""
+    """Compute the compass heading (bearing) from the current position toward JFK.
+
+    Use:
+        Called during metric computation to report which direction the aircraft
+        is pointed along the route. As the flight progresses from LAX to JFK,
+        the heading represents the direction needed to reach the destination
+        from the current lat/lon. This provides a realistic compass reading
+        for each metric snapshot.
+
+    Implementation:
+        Uses the standard spherical trigonometry formula for the initial
+        bearing between two points on the Earth. Given the current position
+        (lat, lon) and destination (JFK), we compute:
+          x = sin(Δlon) · cos(lat2)
+          y = cos(lat1)·sin(lat2) - sin(lat1)·cos(lat2)·cos(Δlon)
+          bearing = atan2(x, y)
+        The result is converted from radians to degrees and normalized to
+        the 0–360 compass range (0/360 = North, 90 = East, 180 = South,
+        270 = West).
+    """
     dlon = math.radians(JFK_LON - lon)
     lat1 = math.radians(lat)
     lat2 = math.radians(JFK_LAT)
@@ -115,24 +142,13 @@ def _fuel_remaining(elapsed_minutes: float) -> float:
     """Fuel remaining in gallons. Higher burn in climb/cruise."""
     if elapsed_minutes <= 0:
         return INITIAL_FUEL_GAL
-    phase = _get_phase(elapsed_minutes)
-    # Burn rates (gal/min) - approximate
-    burn_rates = {
-        FlightPhase.BOARDING: 5,
-        FlightPhase.TAXI_OUT: 15,
-        FlightPhase.TAKEOFF_CLIMB: 80,
-        FlightPhase.CRUISE: 45,
-        FlightPhase.DESCENT: 30,
-        FlightPhase.LANDING: 20,
-        FlightPhase.TAXI_IN: 10,
-    }
     remaining = INITIAL_FUEL_GAL
     for p, start in PHASE_START_MINUTES.items():
         dur = PHASE_DURATIONS[p]
         if elapsed_minutes <= start:
             break
         segment_min = min(elapsed_minutes - start, dur)
-        remaining -= segment_min * burn_rates[p]
+        remaining -= segment_min * PHASE_BURN_RATES[p]
     return max(remaining, 0)
 
 
@@ -149,7 +165,7 @@ def compute_metrics(elapsed_minutes: float) -> FlightMetrics:
     flight_prog = _flight_progress(elapsed_minutes)
     altitude = _altitude_ft(elapsed_minutes, phase, progress)
     airspeed = _airspeed_knots(elapsed_minutes, phase, progress)
-    lat, lon = _great_circle_position(flight_prog)
+    lat, lon = _linear_position(flight_prog)
     heading = _heading_degrees(lat, lon)
     fuel_gal = _fuel_remaining(elapsed_minutes)
     fuel_pct = 100 * fuel_gal / INITIAL_FUEL_GAL if INITIAL_FUEL_GAL else 0

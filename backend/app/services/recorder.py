@@ -16,7 +16,14 @@ from app.simulation.metrics import compute_metrics
 _recorder_thread: threading.Thread | None = None
 _stop_event = threading.Event()
 
-
+# Open session
+#    → Load active flights
+#    → For each flight:
+#        - If finished → mark completed, commit, next
+#        - Else → compute metrics → create FlightMetric → add to session
+#    → Commit all changes
+#    → On error → rollback
+#    → Close session
 def _record_metrics() -> None:
     """Record metrics for all active flights."""
     db = SessionLocal()

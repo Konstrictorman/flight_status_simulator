@@ -107,8 +107,14 @@ Returns Server-Sent Events with metric updates every second.
 
 ## Assumptions and Design Decisions
 
+### Assumptions
+
+- **Position interpolation:** Position between LAX and JFK uses linear interpolation in lat/lon space, treating coordinates as flat. The path on the sphere is curved and somewhat off the true shortest path. For a flight simulator where we only need plausible intermediate positions between LAX and JFK, this linear approximation is simple and usually sufficient. For more accurate great-circle paths, you'd use formulas like the spherical linear interpolation (slerp) for vectors on the unit sphere.
+
+### Design Decisions
+
 - **Time model:** Simulation time advances based on real elapsed time with configurable acceleration. Metrics are computed from `started_at` and current time.
-- **Route:** Fixed LAX to JFK; position interpolated along a great-circle path.
+- **Route:** Fixed LAX to JFK; position interpolated using linear lat/lon (see Assumptions).
 - **Database:** SQLite (file `flight_simulator.db` in the backend directory). No extra setup required.
 - **Time acceleration:** 1 real second = 60 simulation minutes (configurable via `APP_TIME_ACCELERATION`).
 - **Metric recording:** Background task records metrics every 10 seconds for active flights.

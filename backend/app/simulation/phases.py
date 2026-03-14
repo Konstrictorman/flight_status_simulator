@@ -25,6 +25,17 @@ PHASE_DURATIONS = {
     FlightPhase.TAXI_IN: 10,
 }
 
+# Fuel burn rates in gallons per minute (approximate)
+PHASE_BURN_RATES = {
+    FlightPhase.BOARDING: 5,
+    FlightPhase.TAXI_OUT: 15,
+    FlightPhase.TAKEOFF_CLIMB: 80,
+    FlightPhase.CRUISE: 45,
+    FlightPhase.DESCENT: 30,
+    FlightPhase.LANDING: 20,
+    FlightPhase.TAXI_IN: 10,
+}
+
 # Cumulative start minute for each phase (0-based)
 def _build_cumulative() -> dict[FlightPhase, int]:
     cumulative = {}
