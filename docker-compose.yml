@@ -1,0 +1,16 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - sqlite_data:/app/data
+    environment:
+      - APP_DATABASE_URL=sqlite:///./data/flight_simulator.db
+    working_dir: /app
+
+volumes:
+  sqlite_data:
