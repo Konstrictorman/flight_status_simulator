@@ -45,6 +45,21 @@ docker-compose up --build
 
 The API will be available at `http://localhost:8000`.
 
+### Frontend (Next.js)
+
+The `frontend/` app shows a list of flights and a real-time flight view (map + charts) using the backend REST and SSE APIs.
+
+1. Start the backend (see above).
+2. From the repo root:
+   ```bash
+   cd frontend
+   npm install
+   ```
+3. Create `frontend/.env.local` with `NEXT_PUBLIC_API_URL=http://localhost:8000`.
+4. Run `npm run dev` and open [http://localhost:3000](http://localhost:3000).
+
+See [frontend/README.md](frontend/README.md) for more details.
+
 ## Code Quality and SonarQube
 
 The backend includes a SonarQube configuration (`backend/sonar-project.properties`) for code analysis and test coverage.
