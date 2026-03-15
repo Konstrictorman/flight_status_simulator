@@ -36,6 +36,22 @@ jobs:
         env:
           APP_RECORDER_ENABLED: 'false'
 
+      - name: Fix coverage paths for SonarCloud
+        run: |
+          python - << 'EOF'
+          import re
+          with open("coverage.xml", "r") as f:
+              content = f.read()
+          content = re.sub(r"<source>[^<]*</source>", "<source>.</source>", content)
+          content = re.sub(
+              r'filename="(?!app/)([^"]+)"',
+              r'filename="app/\1"',
+              content
+          )
+          with open("coverage.xml", "w") as f:
+              f.write(content)
+          EOF
+
       - name: Upload coverage report
         run: cp coverage.xml ../coverage.xml
       - name: Upload coverage artifact

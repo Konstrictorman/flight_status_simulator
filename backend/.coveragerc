@@ -1,0 +1,7 @@
+# Coverage configuration for pytest-cov
+# relative_files so paths aren't absolute; CI step rewrites XML for SonarCloud.
+# See: https://coverage.readthedocs.io/en/stable/config.html
+
+[run]
+source = app
+relative_files = true
