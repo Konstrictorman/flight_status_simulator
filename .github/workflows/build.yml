@@ -37,6 +37,8 @@ jobs:
           APP_RECORDER_ENABLED: 'false'
 
       - name: Upload coverage report
+        run: cp coverage.xml ../coverage.xml
+      - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
@@ -56,9 +58,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: coverage-report
-
-      - name: Place coverage in backend
-        run: mkdir -p backend && cp coverage-report/coverage.xml backend/coverage.xml
+          path: backend
 
       - name: SonarCloud analysis
         uses: SonarSource/sonarcloud-github-action@v2
