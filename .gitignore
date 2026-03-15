@@ -62,6 +62,9 @@ db.sqlite3
 db.sqlite3-journal
 flight_simulator.db
 
+# Project context (local reference, not for version control)
+CONTEXT.md
+
 # Flask stuff:
 instance/
 .webassets-cache

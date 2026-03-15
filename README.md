@@ -45,6 +45,36 @@ docker-compose up --build
 
 The API will be available at `http://localhost:8000`.
 
+## Code Quality and SonarQube
+
+The backend includes a SonarQube configuration (`backend/sonar-project.properties`) for code analysis and test coverage.
+
+### Generate test coverage report
+
+From the `backend` directory, run tests with coverage in XML format (required by SonarQube):
+
+```bash
+cd backend
+pip install -r requirements.txt
+pytest --cov=app --cov-report=xml --cov-report=term
+```
+
+This produces `coverage.xml` in the backend directory.
+
+### Run SonarQube / SonarCloud analysis
+
+1. **SonarQube (self-hosted):** Install the [SonarScanner](https://docs.sonarsource.com/sonarqube/latest/analyzing-source-code/scanners/sonarscanner/), then from the `backend` directory:
+
+   ```bash
+   sonar-scanner
+   ```
+
+   Set `sonar.host.url` and token via environment or in `sonar-project.properties` if needed.
+
+2. **SonarCloud (cloud):** In your SonarCloud project, set the build to run from `backend`, generate the coverage report as above, then run the scanner with the token provided by SonarCloud (e.g. in CI).
+
+3. **GitHub Actions:** The CI workflow (`.github/workflows/build.yml`) runs SonarCloud after tests. Add your SonarCloud token as a repository secret named `SONAR_TOKEN` (Settings → Secrets and variables → Actions), then push or open a PR; the **SonarCloud** job will use `coverage.xml` from the test run.
+
 ## API Usage Examples
 
 ### Start a new flight simulation
