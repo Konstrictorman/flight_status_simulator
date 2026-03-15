@@ -1,7 +1,5 @@
 """Background metric recorder for active flights."""
 import threading
-import time
-from datetime import datetime
 
 from sqlalchemy import select
 
