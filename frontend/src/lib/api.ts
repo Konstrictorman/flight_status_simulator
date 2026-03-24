@@ -8,8 +8,19 @@ export interface Flight {
   started_at?: string;
 }
 
+export interface RouteInfo {
+  code: string;
+  label: string;
+  origin: { lat: number; lon: number };
+  destination: { lat: number; lon: number };
+}
+
 export interface FlightListResponse {
   flights: Flight[];
+}
+
+export interface RoutesResponse {
+  routes: RouteInfo[];
 }
 
 export async function fetchFlights(): Promise<FlightListResponse> {
@@ -18,8 +29,18 @@ export async function fetchFlights(): Promise<FlightListResponse> {
   return res.json();
 }
 
-export async function createFlight(): Promise<Flight> {
-  const res = await fetch(`${getBaseUrl()}/flights`, { method: "POST" });
+export async function fetchRoutes(): Promise<RoutesResponse> {
+  const res = await fetch(`${getBaseUrl()}/routes`);
+  if (!res.ok) throw new Error("Failed to fetch routes");
+  return res.json();
+}
+
+export async function createFlight(route?: string): Promise<Flight> {
+  const res = await fetch(`${getBaseUrl()}/flights`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ route: route ?? "BOG-LHR" }),
+  });
   if (!res.ok) throw new Error("Failed to create flight");
   return res.json();
 }

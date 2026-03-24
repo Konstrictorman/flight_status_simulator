@@ -13,12 +13,25 @@ import {
   ListItemText,
   CircularProgress,
   Alert,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Stack,
 } from "@mui/material";
 import Link from "next/link";
-import { fetchFlights, createFlight, type Flight } from "@/lib/api";
+import {
+  fetchFlights,
+  fetchRoutes,
+  createFlight,
+  type Flight,
+  type RouteInfo,
+} from "@/lib/api";
 
 export default function HomePage() {
   const [flights, setFlights] = useState<Flight[]>([]);
+  const [routes, setRoutes] = useState<RouteInfo[]>([]);
+  const [selectedRoute, setSelectedRoute] = useState("BOG-LHR");
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,14 +51,22 @@ export default function HomePage() {
 
   useEffect(() => {
     loadFlights();
+    fetchRoutes()
+      .then((data) => {
+        setRoutes(data.routes);
+        if (data.routes.length > 0) {
+          setSelectedRoute(data.routes[0].code);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const handleCreateFlight = async () => {
     setCreating(true);
     setError(null);
     try {
-      await createFlight();
-      await loadFlights();
+      createFlight(selectedRoute);
+      loadFlights();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to create flight");
     } finally {
@@ -59,7 +80,7 @@ export default function HomePage() {
         Flights
       </Typography>
       <Typography color="text.secondary" sx={{ mb: 2 }}>
-        LAX to JFK simulations. Start a new flight or watch an existing one in real time.
+        Select a route and start a new simulation, or watch an existing one in real time.
       </Typography>
 
       {error && (
@@ -68,14 +89,31 @@ export default function HomePage() {
         </Alert>
       )}
 
-      <Button
-        variant="contained"
-        onClick={handleCreateFlight}
-        disabled={creating}
-        sx={{ mb: 2 }}
-      >
-        {creating ? <CircularProgress size={24} /> : "Start new flight"}
-      </Button>
+      <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+        <FormControl size="small" sx={{ minWidth: 280 }}>
+          <InputLabel id="route-select-label">Route</InputLabel>
+          <Select
+            labelId="route-select-label"
+            value={selectedRoute}
+            label="Route"
+            onChange={(e) => setSelectedRoute(e.target.value)}
+          >
+            {routes.map((r) => (
+              <MenuItem key={r.code} value={r.code}>
+                {r.code} — {r.label}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <Button
+          variant="contained"
+          onClick={handleCreateFlight}
+          disabled={creating}
+        >
+          {creating ? <CircularProgress size={24} /> : "Start new flight"}
+        </Button>
+      </Stack>
 
       {loading ? (
         <Box display="flex" justifyContent="center" py={4}>
@@ -85,7 +123,7 @@ export default function HomePage() {
         <Card>
           <CardContent>
             <Typography color="text.secondary">
-              No flights yet. Click &quot;Start new flight&quot; to begin a simulation.
+              No flights yet. Select a route and click &quot;Start new flight&quot; to begin.
             </Typography>
           </CardContent>
         </Card>

@@ -1,8 +1,9 @@
 """Flight API endpoints."""
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -10,11 +11,16 @@ from app.database import get_db
 from app.models import Flight, FlightMetric
 from app.models.flight import FlightStatus
 from app.simulation.engine import SimulationEngine
-from app.simulation.metrics import FlightMetrics, compute_metrics
+from app.simulation.metrics import FlightMetrics, compute_metrics, ROUTES, DEFAULT_ROUTE
 from app.simulation.phases import TOTAL_DURATION_MINUTES
 
 router = APIRouter(prefix="/flights", tags=["flights"])
 engine = SimulationEngine()
+
+
+class CreateFlightRequest(BaseModel):
+    """Request body for creating a new flight."""
+    route: Optional[str] = DEFAULT_ROUTE
 
 
 def _ensure_utc(dt: datetime) -> datetime:
@@ -39,17 +45,23 @@ def _metrics_to_dict(m: FlightMetrics) -> dict[str, Any]:
 
 
 @router.post("", status_code=201)
-def create_flight(db: Session = Depends(get_db)) -> dict[str, Any]:
-    """Start a new flight simulation."""
+def create_flight(
+    body: CreateFlightRequest,
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    """Start a new flight simulation with a selected route."""
+    route = body.route or DEFAULT_ROUTE
+    if route not in ROUTES:
+        raise HTTPException(status_code=400, detail=f"Unknown route: {route}")
     flight = Flight(
-        route="LAX-JFK",
+        route=route,
         status=FlightStatus.ACTIVE,
         started_at=datetime.now(timezone.utc),
     )
     db.add(flight)
     db.commit()
     db.refresh(flight)
-    m = compute_metrics(0)
+    m = compute_metrics(0, route)
     metric = FlightMetric(
         flight_id=flight.id,
         phase=m.phase,
@@ -142,3 +154,23 @@ def get_flight_history(
         for m in rows
     ]
     return {"flight_id": flight_id, "history": history}
+
+
+# ---- Routes catalogue ----
+
+routes_router = APIRouter(tags=["routes"])
+
+
+@routes_router.get("/routes")
+def list_routes() -> dict[str, Any]:
+    """Return all available flight routes."""
+    items = [
+        {
+            "code": code,
+            "label": info["label"],
+            "origin": info["origin"],
+            "destination": info["destination"],
+        }
+        for code, info in ROUTES.items()
+    ]
+    return {"routes": items}

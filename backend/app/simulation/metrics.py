@@ -9,7 +9,33 @@ from app.simulation.phases import (
     TOTAL_DURATION_MINUTES,
 )
 
-# LAX and JFK coordinates
+# ---- Route catalogue --------------------------------------------------------
+ROUTES = {
+    "BOG-LHR": {
+        "label": "Bogota to London Heathrow",
+        "origin": {"lat": -74.0721, "lon": 4.7110},       # El Dorado International
+        "destination": {"lat": 51.4700, "lon": -0.4543},
+    },
+    "LAX-JFK": {
+        "label": "Los Angeles to New York JFK",
+        "origin": {"lat": 33.9425, "lon": -118.4081},
+        "destination": {"lat": 40.6413, "lon": -73.7781},
+    },
+    "NRT-SFO": {
+        "label": "Tokyo Narita to San Francisco",
+        "origin": {"lat": 35.7720, "lon": 140.3929},
+        "destination": {"lat": 37.6213, "lon": -122.3790},
+    },
+    "DXB-SYD": {
+        "label": "Dubai to Sydney",
+        "origin": {"lat": 25.2532, "lon": 55.3657},
+        "destination": {"lat": -33.9461, "lon": 151.1772},
+    },
+}
+
+DEFAULT_ROUTE = "BOG-LHR"
+
+# LAX and JFK coordinates (kept for position / heading helpers)
 LAX_LAT = 33.9425
 LAX_LON = -118.4081
 JFK_LAT = 40.6413
@@ -158,8 +184,8 @@ def _oat_celsius(altitude_ft: float) -> float:
     return 15 - (altitude_ft / 1000) * 1.98
 
 
-def compute_metrics(elapsed_minutes: float) -> FlightMetrics:
-    """Compute all metrics at given elapsed simulation minutes."""
+def compute_metrics(elapsed_minutes: float, route: str = DEFAULT_ROUTE) -> FlightMetrics:
+    """Compute all metrics at given elapsed simulation minutes for the given route."""
     phase = _get_phase(elapsed_minutes)
     progress = _phase_progress(elapsed_minutes, phase)
     flight_prog = _flight_progress(elapsed_minutes)
