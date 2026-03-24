@@ -22,14 +22,14 @@ class FlightStatus:
 
 
 class Flight(Base):
-    """Flight entity - represents a simulated LAX-JFK flight."""
+    """Flight entity - represents a simulated flight between two airports."""
 
     __tablename__ = "flights"
 
     id: Mapped[str] = mapped_column(
         String(36), primary_key=True, default=lambda: str(uuid.uuid4())
     )
-    route: Mapped[str] = mapped_column(String(20), default="LAX-JFK")
+    route: Mapped[str] = mapped_column(String(20), default="BOG-LHR")
     status: Mapped[str] = mapped_column(String(20), default=FlightStatus.ACTIVE)
     started_at: Mapped[datetime] = mapped_column(
         DateTime, default=lambda: datetime.now(timezone.utc)

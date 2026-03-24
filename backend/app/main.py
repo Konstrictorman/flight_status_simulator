@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.flights import router as flights_router
+from app.api.flights import router as flights_router, routes_router
 from app.api.stream import router as stream_router
 from app.config import settings
 from app.database import init_db
@@ -23,7 +23,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Flight Status Simulator",
-    description="Simulates LAX to JFK commercial flights with real-time metrics",
+    description="Simulates commercial flights with real-time metrics streaming",
     version="1.0.0",
     lifespan=lifespan,
 )
@@ -38,3 +38,4 @@ app.add_middleware(
 
 app.include_router(flights_router)
 app.include_router(stream_router)
+app.include_router(routes_router)
