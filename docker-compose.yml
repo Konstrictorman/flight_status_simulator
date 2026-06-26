@@ -12,5 +12,18 @@ services:
       - APP_DATABASE_URL=sqlite:///./data/flight_simulator.db
     working_dir: /app
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+
 volumes:
   sqlite_data:
